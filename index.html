@@ -7,9 +7,8 @@
 <style>
   :root{--bg:#f4f5f7;--card:#fff;--ink:#1c2230;--mut:#6b7385;--line:#d9dde5;--acc:#0b4a8f;--acc2:#e8f0fa;--bad:#b3261e}
   *{box-sizing:border-box}
-  [hidden]{display:none!important}
   body{margin:0;font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-  .wrap{max-width:1020px;margin:0 auto;padding:16px}
+  .wrap{max-width:980px;margin:0 auto;padding:16px}
   header{text-align:center;margin:8px 0 16px}
   header h1{margin:0;font-size:22px;font-weight:600}
   header p{margin:2px 0;color:var(--mut);font-size:13px}
@@ -40,21 +39,6 @@
   .sigs{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px;font-size:13px;font-style:italic}
   .sigs div{border-top:1px solid #000;padding-top:3px}
   #printArea{display:none}
-
-  /* login + top bar */
-  .login{max-width:420px;margin:60px auto;text-align:center}
-  .login h2{margin:0 0 6px;font-size:20px}
-  .login p{color:var(--mut);margin:6px 0 18px}
-  #gbtn{display:flex;justify-content:center;min-height:44px}
-  .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-  .who{display:flex;align-items:center;gap:10px}
-  .who img{width:36px;height:36px;border-radius:50%;background:var(--line)}
-  .who b{display:block;font-size:14px}
-  .badge{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;background:var(--acc2);color:var(--acc);margin-left:6px;vertical-align:middle}
-  .tabs{display:flex;gap:6px;margin-bottom:14px}
-  .tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
-  td select{padding:5px 6px;width:auto}
-
   @media (max-width:640px){.grid{grid-template-columns:repeat(2,1fr)}.c2,.c3,.c6{grid-column:span 2}}
   @media print{
     body{background:#fff}.wrap>*:not(#printArea){display:none!important}
@@ -74,148 +58,77 @@
     <p>ITINERARY FORM (errands) &middot; Travel Log</p>
   </header>
 
-  <!-- ===== LOGIN ===== -->
-  <div class="card login" id="login">
-    <h2>Sign in</h2>
-    <p>Use your Google account. Your entries are private to you.</p>
-    <div id="gbtn"></div>
-    <p class="status" id="loginMsg" style="margin-top:14px"></p>
+  <div class="card">
+    <div class="grid">
+      <label class="c2">Date
+        <input type="date" id="date">
+      </label>
+      <label class="c2">Day
+        <input type="text" id="day" readonly>
+      </label>
+      <label class="c2">Re-imbursement for
+        <select id="service">
+          <option value="">(none)</option>
+          <option>Club Service</option>
+          <option>Community Service</option>
+          <option>International Service</option>
+          <option>Vocational Service</option>
+          <option>Administrative</option>
+          <option>Accounting</option>
+          <option>Others</option>
+        </select>
+      </label>
+      <label class="c3">From
+        <input type="text" id="from" placeholder="Starting point">
+      </label>
+      <label class="c3">To
+        <input type="text" id="to" placeholder="Destination">
+      </label>
+      <label class="c3">Purpose
+        <input type="text" id="purpose" placeholder="Reason for errand">
+      </label>
+      <label class="c2">Expense type
+        <select id="expense">
+          <option value="">(blank)</option>
+          <option>Gas</option>
+          <option>Parking</option>
+        </select>
+      </label>
+      <label>Amount
+        <input type="number" id="amount" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+      </label>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="pri" id="saveBtn">Save entry</button>
+      <button id="cancelBtn" style="display:none">Cancel edit</button>
+      <span class="status" id="status"></span>
+    </div>
   </div>
 
-  <!-- ===== APP ===== -->
-  <div id="app" hidden>
-    <div class="topbar">
-      <div class="who">
-        <img id="uPic" alt="" referrerpolicy="no-referrer">
-        <div><b><span id="uName"></span><span class="badge" id="uRole"></span></b><span class="status" id="uEmail"></span></div>
+  <div class="card">
+    <div class="toolbar">
+      <div class="row">
+        <label class="status">From date
+          <input type="date" id="fromDate">
+        </label>
+        <label class="status">To date
+          <input type="date" id="toDate">
+        </label>
+        <button id="allBtn">Show all</button>
+        <button id="refreshBtn">Refresh</button>
       </div>
-      <button id="signOutBtn">Sign out</button>
-    </div>
-    <div class="tabs" id="tabs" hidden>
-      <button class="on" data-tab="mine">My log</button>
-      <button data-tab="admin">Admin portal</button>
-    </div>
-
-    <!-- ===== MY LOG ===== -->
-    <div id="mineView">
-      <div class="card">
-        <div class="grid">
-          <label class="c2">Date
-            <input type="date" id="date">
-          </label>
-          <label class="c2">Day
-            <input type="text" id="day" readonly>
-          </label>
-          <label class="c2">Re-imbursement for
-            <select id="service">
-              <option value="">(none)</option>
-              <option>Club Service</option>
-              <option>Community Service</option>
-              <option>International Service</option>
-              <option>Vocational Service</option>
-              <option>Administrative</option>
-              <option>Accounting</option>
-              <option>Others</option>
-            </select>
-          </label>
-          <label class="c3">From
-            <input type="text" id="from" placeholder="Starting point">
-          </label>
-          <label class="c3">To
-            <input type="text" id="to" placeholder="Destination">
-          </label>
-          <label class="c3">Purpose
-            <input type="text" id="purpose" placeholder="Reason for errand">
-          </label>
-          <label class="c2">Expense type
-            <select id="expense">
-              <option value="">(blank)</option>
-              <option>Gas</option>
-              <option>Parking</option>
-            </select>
-          </label>
-          <label>Amount
-            <input type="number" id="amount" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
-          </label>
-        </div>
-        <div class="row" style="margin-top:14px">
-          <button class="pri" id="saveBtn">Save entry</button>
-          <button id="cancelBtn" style="display:none">Cancel edit</button>
-          <span class="status" id="status"></span>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="toolbar">
-          <div class="row">
-            <label class="status">From date
-              <input type="date" id="fromDate">
-            </label>
-            <label class="status">To date
-              <input type="date" id="toDate">
-            </label>
-            <button id="allBtn">Show all</button>
-            <button id="refreshBtn">Refresh</button>
-          </div>
-          <div class="row">
-            <button id="sortBtn" title="Arrange all entries by date, oldest first">Sort by date</button>
-            <button id="printBtn">Print form</button>
-          </div>
-        </div>
-        <p class="status" style="margin:0 0 8px">Drag the &#8942;&#8942; handle on the left of a row to move an entry to the right position.</p>
-        <div class="tablewrap">
-          <table>
-            <thead><tr><th></th><th>Date</th><th>Day</th><th>From</th><th>To</th><th>Purpose</th><th>Expense</th><th class="num">Amount</th><th></th></tr></thead>
-            <tbody id="rows"></tbody>
-            <tfoot><tr><td colspan="7">Total</td><td class="num" id="total">0.00</td><td></td></tr></tfoot>
-          </table>
-        </div>
+      <div class="row">
+        <button id="sortBtn" title="Arrange all entries by date, oldest first">Sort by date</button>
+        <button id="printBtn">Print form</button>
       </div>
     </div>
-
-    <!-- ===== ADMIN PORTAL ===== -->
-    <div id="adminView" hidden>
-      <div class="card">
-        <div class="toolbar">
-          <b>Users</b>
-          <button id="aRefresh">Refresh</button>
-        </div>
-        <div class="tablewrap">
-          <table>
-            <thead><tr><th>User</th><th>Role</th><th>Status</th><th class="num">Entries</th><th class="num">Total</th><th>Last login</th><th></th></tr></thead>
-            <tbody id="usersBody"></tbody>
-          </table>
-        </div>
-        <p class="status">Anyone who signs in with Google is added here automatically as a normal user. Disable an account to block it. Admins set in the script cannot be changed here.</p>
-      </div>
-
-      <div class="card">
-        <div class="toolbar">
-          <div class="row">
-            <label class="status">User
-              <select id="aUser"></select>
-            </label>
-            <label class="status">From date
-              <input type="date" id="aFrom">
-            </label>
-            <label class="status">To date
-              <input type="date" id="aTo">
-            </label>
-            <button id="aAll">Reset</button>
-          </div>
-          <div class="row">
-            <button id="aPrint" title="Pick one user to print their form">Print this user's form</button>
-          </div>
-        </div>
-        <div class="tablewrap">
-          <table>
-            <thead><tr><th>Date</th><th>Day</th><th>User</th><th>From</th><th>To</th><th>Purpose</th><th>Expense</th><th class="num">Amount</th><th></th></tr></thead>
-            <tbody id="aRows"></tbody>
-            <tfoot><tr><td colspan="7">Total</td><td class="num" id="aTotal">0.00</td><td></td></tr></tfoot>
-          </table>
-        </div>
-        <p class="status" id="aStatus"></p>
-      </div>
+    <p class="status" style="margin:0 0 8px">Drag the &#8942;&#8942; handle on the left of a row to move an entry to the right position.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th></th><th>Date</th><th>Day</th><th>From</th><th>To</th><th>Purpose</th><th>Expense</th><th class="num">Amount</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+        <tfoot><tr><td colspan="7">Total</td><td class="num" id="total">0.00</td><td></td></tr></tfoot>
+      </table>
     </div>
   </div>
 
@@ -223,94 +136,32 @@
 </div>
 
 <script>
-/* ====== CONFIG: paste your Google OAuth Client ID (same one as in Code.gs) ====== */
-const CLIENT_ID = '475258710332-ij24hs1dumfhlc50t5fggkpv6l3c0ec0.apps.googleusercontent.com';
 const API = 'https://script.google.com/macros/s/AKfycbz4uN17nzy0nNEYOXkQ_APVqrZyY9lqnzJPR7tGN01JGyo9-J__t07rk36W8gxT0Ey4/exec';
-
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const $ = id => document.getElementById(id);
-let me = null, token = '', entries = [], editingId = null, rangeFrom = '', rangeTo = '';
-let adminUsers = [], adminEntries = [];
+let entries = [], editingId = null, rangeFrom = '', rangeTo = '';
 
 const peso = n => Number(n || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const dayOf = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-').map(Number); return DAYS[new Date(y, m-1, d).getDay()]; };
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
-const jwtExp = t => { try { return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).exp; } catch { return 0; } };
-const fmtDT = s => s ? new Date(s).toLocaleString('en-PH', {dateStyle:'medium', timeStyle:'short'}) : '';
 
 function setStatus(msg, err) { const s = $('status'); s.textContent = msg; s.className = 'status' + (err ? ' err' : ''); }
 
-/* ---------------- API ---------------- */
 async function call(payload) {
-  const res = await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({...payload, token}) });
+  const res = await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
   const j = await res.json();
-  if (!j.ok) {
-    const msg = String(j.error || 'Request failed');
-    const m = msg.match(/^(AUTH|DISABLED):\s*(.*)$/);
-    if (m) { showLogin(m[2]); throw new Error(m[2]); }
-    throw new Error(msg);
-  }
+  if (!j.ok) throw new Error(j.error || 'Request failed');
   return j;
 }
 
-/* ---------------- Google sign-in ---------------- */
-function initGsi() {
-  google.accounts.id.initialize({ client_id: CLIENT_ID, callback: r => onCredential(r.credential), auto_select: true });
-  google.accounts.id.renderButton($('gbtn'), { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill' });
-  if (!me) google.accounts.id.prompt();
-}
-
-function onCredential(cred) {
-  token = cred;
-  try { localStorage.setItem('etl_token', cred); } catch {}
-  boot();
-}
-
-function showLogin(msg) {
-  me = null; token = '';
-  try { localStorage.removeItem('etl_token'); } catch {}
-  $('app').hidden = true; $('login').hidden = false;
-  $('loginMsg').textContent = msg || '';
-  $('loginMsg').className = 'status' + (msg ? ' err' : '');
-}
-
-$('signOutBtn').onclick = () => {
-  if (window.google && google.accounts) google.accounts.id.disableAutoSelect();
-  showLogin('You have signed out.');
-  $('loginMsg').className = 'status';
-};
-
-async function boot() {
-  $('loginMsg').textContent = 'Signing in…'; $('loginMsg').className = 'status';
-  try {
-    const j = await call({action: 'me'});
-    me = j.user;
-    $('uName').textContent = me.name; $('uEmail').textContent = me.email;
-    $('uRole').textContent = me.role;
-    $('uPic').src = me.picture || '';
-    $('tabs').hidden = me.role !== 'admin';
-    $('login').hidden = true; $('app').hidden = false;
-    switchTab('mine');
-    resetForm(); await load();
-  } catch (e) { if (!me) { $('loginMsg').textContent = e.message; $('loginMsg').className = 'status err'; } }
-}
-
-/* ---------------- tabs ---------------- */
-function switchTab(t) {
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
-  $('mineView').hidden = t !== 'mine';
-  $('adminView').hidden = t !== 'admin';
-  if (t === 'admin') loadAdmin();
-}
-$('tabs').onclick = ev => { const b = ev.target.closest('button'); if (b) switchTab(b.dataset.tab); };
-
-/* ---------------- my log ---------------- */
 async function load() {
   setStatus('Loading…');
   try {
-    const j = await call({action: 'list'});
-    entries = j.entries; // already in saved (dragged) order
+    const res = await fetch(API);
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error);
+    entries = j.entries; // server already returns them in saved (dragged) order
     setStatus('');
     render();
   } catch (e) { setStatus('Could not load: ' + e.message, true); }
@@ -334,10 +185,10 @@ function render() {
       <td class="row" style="flex-wrap:nowrap"><button data-edit="${esc(e.id)}">Edit</button><button class="del" data-del="${esc(e.id)}">Delete</button></td>
     </tr>`).join('') : '<tr><td colspan="9" class="status">No entries yet.</td></tr>';
   $('total').textContent = peso(list.reduce((s, e) => s + (Number(e.amount) || 0), 0));
-  buildPrint(list, me ? me.name : '');
+  buildPrint(list);
 }
 
-function buildPrint(list, requester) {
+function buildPrint(list) {
   const blanks = Math.max(0, 22 - list.length);
   const services = [...new Set(list.map(e => e.service).filter(Boolean))];
   $('printArea').innerHTML = `
@@ -347,7 +198,7 @@ function buildPrint(list, requester) {
     ${list.map(e => `<tr><td>${esc(e.date)}</td><td>${esc(e.day)}</td><td>${esc(e.from)}</td><td>${esc(e.to)}</td><td>${esc(e.purpose)}</td><td>${esc(e.expense)}</td><td class="num">${e.amount === '' ? '' : peso(e.amount)}</td></tr>`).join('')}
     ${'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>'.repeat(blanks)}
     </tbody><tfoot><tr><td colspan="6"><b>Total</b></td><td class="num"><b>${peso(list.reduce((s, e) => s + (Number(e.amount) || 0), 0))}</b></td></tr></tfoot></table>
-    <div class="sigs"><div>Requested By:${requester ? ' ' + esc(requester) : ''}</div><div>Received By:</div><div>Approved By:</div><div>Check By:</div></div>
+    <div class="sigs"><div>Requested By:</div><div>Received By:</div><div>Approved By:</div><div>Check By:</div></div>
     <p style="margin-top:18px;font-style:italic">Document No. RCM-OMF-ACC. 005 Revision No.01 Effectivity Date: Aug 15, 2005</p>`;
 }
 
@@ -399,13 +250,14 @@ $('rows').onclick = async ev => {
   }
 };
 
+/* ---------- date range filter (no more month filter) ---------- */
 $('fromDate').addEventListener('input', () => { rangeFrom = $('fromDate').value; render(); });
 $('toDate').addEventListener('input', () => { rangeTo = $('toDate').value; render(); });
 $('allBtn').onclick = () => { rangeFrom = rangeTo = ''; $('fromDate').value = $('toDate').value = ''; render(); };
 $('refreshBtn').onclick = load;
-$('printBtn').onclick = () => { buildPrint(visible(), me.name); window.print(); };
+$('printBtn').onclick = () => window.print();
 
-/* ---------------- drag to reorder (mouse + touch) ---------------- */
+/* ---------- drag to reorder (mouse + touch) ---------- */
 async function saveOrder() {
   setStatus('Saving order…');
   try { await call({action: 'reorder', ids: entries.map(e => e.id)}); setStatus('Order saved.'); }
@@ -441,6 +293,7 @@ $('sortBtn').onclick = async () => {
         break;
       }
     }
+    // auto-scroll near screen edges
     if (ev.clientY < 60) window.scrollBy(0, -12);
     else if (ev.clientY > window.innerHeight - 60) window.scrollBy(0, 12);
   });
@@ -453,6 +306,7 @@ $('sortBtn').onclick = async () => {
     const ids = [...tbody.querySelectorAll('tr[data-id]')].map(r => r.dataset.id);
     const byId = Object.fromEntries(entries.map(e => [String(e.id), e]));
     const set = new Set(ids); let k = 0;
+    // put the dragged (visible) rows back into their slots in the full list
     entries = entries.map(e => set.has(String(e.id)) ? byId[ids[k++]] : e);
     render(); saveOrder();
   };
@@ -460,109 +314,7 @@ $('sortBtn').onclick = async () => {
   tbody.addEventListener('pointercancel', end);
 })();
 
-/* ---------------- admin portal ---------------- */
-function aStatus(msg, err) { const s = $('aStatus'); s.textContent = msg; s.className = 'status' + (err ? ' err' : ''); }
-
-async function loadAdmin() {
-  aStatus('Loading…');
-  try {
-    const [u, e] = await Promise.all([call({action: 'admin_users'}), call({action: 'admin_entries'})]);
-    adminUsers = u.users; adminEntries = e.entries;
-    aStatus('');
-    renderAdmin();
-  } catch (err) { aStatus('Could not load: ' + err.message, true); }
-}
-
-function renderAdmin() {
-  $('usersBody').innerHTML = adminUsers.map(u => {
-    const self = u.email === me.email;
-    return `<tr>
-      <td>${esc(u.name)}<div class="status">${esc(u.email)}</div></td>
-      <td><select data-role="${esc(u.email)}" ${u.fixedAdmin ? 'disabled' : ''}>
-        <option value="user" ${u.role === 'user' ? 'selected' : ''}>user</option>
-        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>admin</option></select></td>
-      <td><select data-status="${esc(u.email)}" ${(u.fixedAdmin || self) ? 'disabled' : ''}>
-        <option value="active" ${u.status !== 'disabled' ? 'selected' : ''}>active</option>
-        <option value="disabled" ${u.status === 'disabled' ? 'selected' : ''}>disabled</option></select></td>
-      <td class="num">${u.count}</td><td class="num">${peso(u.total)}</td>
-      <td class="status">${esc(fmtDT(u.lastLogin))}</td>
-      <td><button data-view="${esc(u.email)}">View entries</button></td>
-    </tr>`;
-  }).join('') || '<tr><td colspan="7" class="status">No users yet.</td></tr>';
-
-  const cur = $('aUser').value;
-  $('aUser').innerHTML = '<option value="">All users</option>' +
-    adminUsers.map(u => `<option value="${esc(u.email)}">${esc(u.name)} (${esc(u.email)})</option>`).join('');
-  $('aUser').value = adminUsers.some(u => u.email === cur) ? cur : '';
-  renderAdminEntries();
-}
-
-function adminList() {
-  const em = $('aUser').value, f = $('aFrom').value, t = $('aTo').value;
-  return adminEntries.filter(e => (!em || e.owner === em) && (!f || String(e.date) >= f) && (!t || String(e.date) <= t));
-}
-
-function renderAdminEntries() {
-  const list = adminList();
-  const nameOf = em => (adminUsers.find(u => u.email === em) || {}).name || em;
-  $('aRows').innerHTML = list.length ? list.map(e => `
-    <tr>
-      <td>${esc(e.date)}</td><td>${esc(e.day)}</td><td>${esc(nameOf(e.owner))}</td>
-      <td>${esc(e.from)}</td><td>${esc(e.to)}</td>
-      <td>${esc(e.purpose)}${e.service ? `<div class="status">${esc(e.service)}</div>` : ''}</td>
-      <td>${esc(e.expense)}</td><td class="num">${e.amount === '' ? '' : peso(e.amount)}</td>
-      <td><button class="del" data-adel="${esc(e.id)}">Delete</button></td>
-    </tr>`).join('') : '<tr><td colspan="9" class="status">No entries.</td></tr>';
-  $('aTotal').textContent = peso(list.reduce((s, e) => s + (Number(e.amount) || 0), 0));
-}
-
-$('aRefresh').onclick = loadAdmin;
-['aUser','aFrom','aTo'].forEach(id => $(id).addEventListener('input', renderAdminEntries));
-$('aAll').onclick = () => { $('aUser').value = ''; $('aFrom').value = ''; $('aTo').value = ''; renderAdminEntries(); };
-
-$('aPrint').onclick = () => {
-  const em = $('aUser').value;
-  if (!em) return aStatus('Pick one user first, then print.', true);
-  const u = adminUsers.find(x => x.email === em);
-  buildPrint(adminList(), u ? u.name : '');
-  window.print();
-};
-
-$('usersBody').addEventListener('change', async ev => {
-  const s = ev.target;
-  const payload = s.dataset.role ? {action: 'admin_set_user', email: s.dataset.role, role: s.value}
-                : s.dataset.status ? {action: 'admin_set_user', email: s.dataset.status, status: s.value} : null;
-  if (!payload) return;
-  aStatus('Saving…');
-  try { await call(payload); await loadAdmin(); aStatus('Saved.'); }
-  catch (e) { aStatus('Failed: ' + e.message, true); loadAdmin(); }
-});
-
-$('usersBody').addEventListener('click', ev => {
-  const b = ev.target.closest('button[data-view]'); if (!b) return;
-  $('aUser').value = b.dataset.view; renderAdminEntries();
-  $('aRows').scrollIntoView({behavior: 'smooth'});
-});
-
-$('aRows').addEventListener('click', async ev => {
-  const b = ev.target.closest('button[data-adel]'); if (!b) return;
-  if (!confirm('Delete this entry? This removes it from the user\'s log too.')) return;
-  aStatus('Deleting…');
-  try { await call({action: 'delete', id: b.dataset.adel}); await loadAdmin(); aStatus('Deleted.'); }
-  catch (e) { aStatus('Delete failed: ' + e.message, true); }
-});
-
-/* ---------------- start ---------------- */
-(function start() {
-  if (CLIENT_ID.startsWith('PASTE_')) {
-    $('loginMsg').textContent = 'Setup needed: paste your Google Client ID into CLIENT_ID in this file.';
-    $('loginMsg').className = 'status err';
-  }
-  let saved = '';
-  try { saved = localStorage.getItem('etl_token') || ''; } catch {}
-  if (saved && jwtExp(saved) > Date.now() / 1000 + 60) { token = saved; boot(); }
-})();
+resetForm(); load();
 </script>
-<script src="https://accounts.google.com/gsi/client" async defer onload="initGsi()"></script>
 </body>
 </html>
