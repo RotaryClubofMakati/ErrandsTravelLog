@@ -32,6 +32,10 @@
   tfoot td{font-weight:600;background:#fafbfc}
   .tablewrap{overflow-x:auto}
   .toolbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;align-items:end}
+  .toolbar label{display:flex;flex-direction:column;gap:3px}
+  .handle{cursor:grab;touch-action:none;user-select:none;text-align:center;color:var(--mut);font-size:18px;width:34px;padding:7px 2px}
+  tr.dragging{opacity:.55;background:var(--acc2);box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  body.dragmode{user-select:none;cursor:grabbing}
   .sigs{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px;font-size:13px;font-style:italic}
   .sigs div{border-top:1px solid #000;padding-top:3px}
   #printArea{display:none}
@@ -104,21 +108,26 @@
   <div class="card">
     <div class="toolbar">
       <div class="row">
-        <label class="status">Month
-          <input type="month" id="month">
+        <label class="status">From date
+          <input type="date" id="fromDate">
+        </label>
+        <label class="status">To date
+          <input type="date" id="toDate">
         </label>
         <button id="allBtn">Show all</button>
         <button id="refreshBtn">Refresh</button>
       </div>
       <div class="row">
+        <button id="sortBtn" title="Arrange all entries by date, oldest first">Sort by date</button>
         <button id="printBtn">Print form</button>
       </div>
     </div>
+    <p class="status" style="margin:0 0 8px">Drag the &#8942;&#8942; handle on the left of a row to move an entry to the right position.</p>
     <div class="tablewrap">
       <table>
-        <thead><tr><th>Date</th><th>Day</th><th>From</th><th>To</th><th>Purpose</th><th>Expense</th><th class="num">Amount</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Date</th><th>Day</th><th>From</th><th>To</th><th>Purpose</th><th>Expense</th><th class="num">Amount</th><th></th></tr></thead>
         <tbody id="rows"></tbody>
-        <tfoot><tr><td colspan="6">Total</td><td class="num" id="total">0.00</td><td></td></tr></tfoot>
+        <tfoot><tr><td colspan="7">Total</td><td class="num" id="total">0.00</td><td></td></tr></tfoot>
       </table>
     </div>
   </div>
@@ -130,7 +139,7 @@
 const API = 'https://script.google.com/macros/s/AKfycbz4uN17nzy0nNEYOXkQ_APVqrZyY9lqnzJPR7tGN01JGyo9-J__t07rk36W8gxT0Ey4/exec';
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const $ = id => document.getElementById(id);
-let entries = [], editingId = null, filterMonth = '';
+let entries = [], editingId = null, rangeFrom = '', rangeTo = '';
 
 const peso = n => Number(n || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -152,23 +161,29 @@ async function load() {
     const res = await fetch(API);
     const j = await res.json();
     if (!j.ok) throw new Error(j.error);
-    entries = j.entries.sort((a, b) => (a.date + a.created).localeCompare(b.date + b.created));
+    entries = j.entries; // server already returns them in saved (dragged) order
     setStatus('');
     render();
   } catch (e) { setStatus('Could not load: ' + e.message, true); }
 }
 
-function visible() { return filterMonth ? entries.filter(e => String(e.date).startsWith(filterMonth)) : entries; }
+function visible() {
+  return entries.filter(e => {
+    const d = String(e.date);
+    return (!rangeFrom || d >= rangeFrom) && (!rangeTo || d <= rangeTo);
+  });
+}
 
 function render() {
   const list = visible();
   $('rows').innerHTML = list.length ? list.map(e => `
-    <tr>
+    <tr data-id="${esc(e.id)}">
+      <td class="handle" title="Drag to move">&#8942;&#8942;</td>
       <td>${esc(e.date)}</td><td>${esc(e.day)}</td><td>${esc(e.from)}</td><td>${esc(e.to)}</td>
       <td>${esc(e.purpose)}${e.service ? `<div class="status">${esc(e.service)}</div>` : ''}</td>
       <td>${esc(e.expense)}</td><td class="num">${e.amount === '' ? '' : peso(e.amount)}</td>
-      <td class="row" style="flex-wrap:nowrap"><button data-edit="${e.id}">Edit</button><button class="del" data-del="${e.id}">Delete</button></td>
-    </tr>`).join('') : '<tr><td colspan="8" class="status">No entries yet.</td></tr>';
+      <td class="row" style="flex-wrap:nowrap"><button data-edit="${esc(e.id)}">Edit</button><button class="del" data-del="${esc(e.id)}">Delete</button></td>
+    </tr>`).join('') : '<tr><td colspan="9" class="status">No entries yet.</td></tr>';
   $('total').textContent = peso(list.reduce((s, e) => s + (Number(e.amount) || 0), 0));
   buildPrint(list);
 }
@@ -204,9 +219,10 @@ $('saveBtn').onclick = async () => {
     from: $('from').value.trim(), to: $('to').value.trim(), purpose: $('purpose').value.trim(),
     expense: $('expense').value, amount: $('amount').value, service: $('service').value
   };
+  const wasEditing = editingId;
   $('saveBtn').disabled = true; setStatus('Saving…');
   try {
-    await call(editingId ? {action: 'update', id: editingId, entry} : {action: 'add', entry});
+    await call(wasEditing ? {action: 'update', id: wasEditing, entry} : {action: 'add', entry});
     resetForm(); await load(); setStatus('Saved.');
   } catch (e) { setStatus('Save failed: ' + e.message, true); }
   $('saveBtn').disabled = false;
@@ -215,14 +231,16 @@ $('saveBtn').onclick = async () => {
 $('cancelBtn').onclick = resetForm;
 
 $('rows').onclick = async ev => {
-  const ed = ev.target.dataset.edit, del = ev.target.dataset.del;
+  const btn = ev.target.closest('button'); if (!btn) return;
+  const ed = btn.dataset.edit, del = btn.dataset.del;
   if (ed) {
-    const e = entries.find(x => x.id === ed); if (!e) return;
+    const e = entries.find(x => String(x.id) === ed); if (!e) return;
     editingId = ed;
-    $('date').value = e.date; $('day').value = e.day;
+    $('date').value = e.date; $('day').value = dayOf(e.date);
     $('from').value = e.from; $('to').value = e.to; $('purpose').value = e.purpose;
     $('expense').value = e.expense; $('amount').value = e.amount; $('service').value = e.service;
     $('saveBtn').textContent = 'Update entry'; $('cancelBtn').style.display = '';
+    setStatus('Editing — change what you need, then press Update entry.');
     window.scrollTo({top: 0, behavior: 'smooth'});
   }
   if (del && confirm('Delete this entry?')) {
@@ -232,12 +250,70 @@ $('rows').onclick = async ev => {
   }
 };
 
-$('month').addEventListener('input', () => { filterMonth = $('month').value; render(); });
-$('allBtn').onclick = () => { filterMonth = ''; $('month').value = ''; render(); };
+/* ---------- date range filter (no more month filter) ---------- */
+$('fromDate').addEventListener('input', () => { rangeFrom = $('fromDate').value; render(); });
+$('toDate').addEventListener('input', () => { rangeTo = $('toDate').value; render(); });
+$('allBtn').onclick = () => { rangeFrom = rangeTo = ''; $('fromDate').value = $('toDate').value = ''; render(); };
 $('refreshBtn').onclick = load;
 $('printBtn').onclick = () => window.print();
 
-$('month').value = todayISO().slice(0, 7); filterMonth = $('month').value;
+/* ---------- drag to reorder (mouse + touch) ---------- */
+async function saveOrder() {
+  setStatus('Saving order…');
+  try { await call({action: 'reorder', ids: entries.map(e => e.id)}); setStatus('Order saved.'); }
+  catch (e) { setStatus('Order not saved: ' + e.message, true); load(); }
+}
+
+$('sortBtn').onclick = async () => {
+  entries.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  render(); await saveOrder();
+};
+
+(function () {
+  const tbody = $('rows');
+  let dragRow = null;
+
+  tbody.addEventListener('pointerdown', ev => {
+    const h = ev.target.closest('.handle'); if (!h) return;
+    dragRow = h.closest('tr');
+    dragRow.classList.add('dragging');
+    document.body.classList.add('dragmode');
+    h.setPointerCapture(ev.pointerId);
+    ev.preventDefault();
+  });
+
+  tbody.addEventListener('pointermove', ev => {
+    if (!dragRow) return;
+    const rows = [...tbody.querySelectorAll('tr[data-id]')].filter(r => r !== dragRow);
+    for (const r of rows) {
+      const b = r.getBoundingClientRect();
+      if (ev.clientY >= b.top && ev.clientY <= b.bottom) {
+        const after = ev.clientY > b.top + b.height / 2;
+        tbody.insertBefore(dragRow, after ? r.nextSibling : r);
+        break;
+      }
+    }
+    // auto-scroll near screen edges
+    if (ev.clientY < 60) window.scrollBy(0, -12);
+    else if (ev.clientY > window.innerHeight - 60) window.scrollBy(0, 12);
+  });
+
+  const end = () => {
+    if (!dragRow) return;
+    dragRow.classList.remove('dragging');
+    document.body.classList.remove('dragmode');
+    dragRow = null;
+    const ids = [...tbody.querySelectorAll('tr[data-id]')].map(r => r.dataset.id);
+    const byId = Object.fromEntries(entries.map(e => [String(e.id), e]));
+    const set = new Set(ids); let k = 0;
+    // put the dragged (visible) rows back into their slots in the full list
+    entries = entries.map(e => set.has(String(e.id)) ? byId[ids[k++]] : e);
+    render(); saveOrder();
+  };
+  tbody.addEventListener('pointerup', end);
+  tbody.addEventListener('pointercancel', end);
+})();
+
 resetForm(); load();
 </script>
 </body>
