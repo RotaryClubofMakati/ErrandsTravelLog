@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Errands Travel Log</title>
+<style>
+  :root{--bg:#f4f5f7;--card:#fff;--ink:#1c2230;--mut:#6b7385;--line:#d9dde5;--acc:#0b4a8f;--acc2:#e8f0fa;--bad:#b3261e}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:980px;margin:0 auto;padding:16px}
+  header{text-align:center;margin:8px 0 16px}
+  header h1{margin:0;font-size:22px;font-weight:600}
+  header p{margin:2px 0;color:var(--mut);font-size:13px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .grid label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:4px}
+  .c2{grid-column:span 2}.c3{grid-column:span 3}.c6{grid-column:span 6}
+  input,select{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);width:100%}
+  input:focus,select:focus{outline:2px solid var(--acc2);border-color:var(--acc)}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button{font:inherit;padding:9px 14px;border-radius:7px;border:1px solid var(--line);background:#fff;cursor:pointer}
+  button.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+  button.del{color:var(--bad)}
+  button:disabled{opacity:.5;cursor:default}
+  .status{font-size:12px;color:var(--mut)}
+  .status.err{color:var(--bad)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{border:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+  th{background:#f0f2f6;font-weight:600;font-size:13px}
+  td.num,th.num{text-align:right;white-space:nowrap}
+  tfoot td{font-weight:600;background:#fafbfc}
+  .tablewrap{overflow-x:auto}
+  .toolbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;align-items:end}
+  .sigs{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px;font-size:13px;font-style:italic}
+  .sigs div{border-top:1px solid #000;padding-top:3px}
+  #printArea{display:none}
+  @media (max-width:640px){.grid{grid-template-columns:repeat(2,1fr)}.c2,.c3,.c6{grid-column:span 2}}
+  @media print{
+    body{background:#fff}.wrap>*:not(#printArea){display:none!important}
+    #printArea{display:block}
+    #printArea h1{font-size:20px;margin:0;text-align:center;font-weight:500}
+    #printArea p{margin:2px 0;text-align:center;font-size:12px}
+    #printArea table{margin-top:12px}
+    #printArea th,#printArea td{border-color:#000;padding:4px 6px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Rotary Club of Makati</h1>
+    <p>District 3830</p>
+    <p>ITINERARY FORM (errands) &middot; Travel Log</p>
+  </header>
+
+  <div class="card">
+    <div class="grid">
+      <label class="c2">Date
+        <input type="date" id="date">
+      </label>
+      <label class="c2">Day
+        <input type="text" id="day" readonly>
+      </label>
+      <label class="c2">Re-imbursement for
+        <select id="service">
+          <option value="">(none)</option>
+          <option>Club Service</option>
+          <option>Community Service</option>
+          <option>International Service</option>
+          <option>Vocational Service</option>
+          <option>Administrative</option>
+          <option>Accounting</option>
+          <option>Others</option>
+        </select>
+      </label>
+      <label class="c3">From
+        <input type="text" id="from" placeholder="Starting point">
+      </label>
+      <label class="c3">To
+        <input type="text" id="to" placeholder="Destination">
+      </label>
+      <label class="c3">Purpose
+        <input type="text" id="purpose" placeholder="Reason for errand">
+      </label>
+      <label class="c2">Expense type
+        <select id="expense">
+          <option value="">(blank)</option>
+          <option>Gas</option>
+          <option>Parking</option>
+        </select>
+      </label>
+      <label>Amount
+        <input type="number" id="amount" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
+      </label>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="pri" id="saveBtn">Save entry</button>
+      <button id="cancelBtn" style="display:none">Cancel edit</button>
+      <span class="status" id="status"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="row">
+        <label class="status">Month
+          <input type="month" id="month">
+        </label>
+        <button id="allBtn">Show all</button>
+        <button id="refreshBtn">Refresh</button>
+      </div>
+      <div class="row">
+        <button id="printBtn">Print form</button>
+      </div>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Date</th><th>Day</th><th>From</th><th>To</th><th>Purpose</th><th>Expense</th><th class="num">Amount</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+        <tfoot><tr><td colspan="6">Total</td><td class="num" id="total">0.00</td><td></td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div id="printArea"></div>
+</div>
+
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbz4uN17nzy0nNEYOXkQ_APVqrZyY9lqnzJPR7tGN01JGyo9-J__t07rk36W8gxT0Ey4/exec';
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const $ = id => document.getElementById(id);
+let entries = [], editingId = null, filterMonth = '';
+
+const peso = n => Number(n || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dayOf = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-').map(Number); return DAYS[new Date(y, m-1, d).getDay()]; };
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+
+function setStatus(msg, err) { const s = $('status'); s.textContent = msg; s.className = 'status' + (err ? ' err' : ''); }
+
+async function call(payload) {
+  const res = await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || 'Request failed');
+  return j;
+}
+
+async function load() {
+  setStatus('Loading…');
+  try {
+    const res = await fetch(API);
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error);
+    entries = j.entries.sort((a, b) => (a.date + a.created).localeCompare(b.date + b.created));
+    setStatus('');
+    render();
+  } catch (e) { setStatus('Could not load: ' + e.message, true); }
+}
+
+function visible() { return filterMonth ? entries.filter(e => String(e.date).startsWith(filterMonth)) : entries; }
+
+function render() {
+  const list = visible();
+  $('rows').innerHTML = list.length ? list.map(e => `
+    <tr>
+      <td>${esc(e.date)}</td><td>${esc(e.day)}</td><td>${esc(e.from)}</td><td>${esc(e.to)}</td>
+      <td>${esc(e.purpose)}${e.service ? `<div class="status">${esc(e.service)}</div>` : ''}</td>
+      <td>${esc(e.expense)}</td><td class="num">${e.amount === '' ? '' : peso(e.amount)}</td>
+      <td class="row" style="flex-wrap:nowrap"><button data-edit="${e.id}">Edit</button><button class="del" data-del="${e.id}">Delete</button></td>
+    </tr>`).join('') : '<tr><td colspan="8" class="status">No entries yet.</td></tr>';
+  $('total').textContent = peso(list.reduce((s, e) => s + (Number(e.amount) || 0), 0));
+  buildPrint(list);
+}
+
+function buildPrint(list) {
+  const blanks = Math.max(0, 22 - list.length);
+  const services = [...new Set(list.map(e => e.service).filter(Boolean))];
+  $('printArea').innerHTML = `
+    <h1>Rotary Club of Makati</h1><p>District 3830</p><p>ITINERARY FORM (errands)</p>
+    <p>May I request for the re-imbursement of the listed transportation expenses for ${services.length ? esc(services.join(', ')) : '____________'}</p>
+    <table><thead><tr><th>Date</th><th>Day</th><th>From</th><th>To</th><th>Purpose</th><th></th><th class="num">Amount</th></tr></thead><tbody>
+    ${list.map(e => `<tr><td>${esc(e.date)}</td><td>${esc(e.day)}</td><td>${esc(e.from)}</td><td>${esc(e.to)}</td><td>${esc(e.purpose)}</td><td>${esc(e.expense)}</td><td class="num">${e.amount === '' ? '' : peso(e.amount)}</td></tr>`).join('')}
+    ${'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>'.repeat(blanks)}
+    </tbody><tfoot><tr><td colspan="6"><b>Total</b></td><td class="num"><b>${peso(list.reduce((s, e) => s + (Number(e.amount) || 0), 0))}</b></td></tr></tfoot></table>
+    <div class="sigs"><div>Requested By:</div><div>Received By:</div><div>Approved By:</div><div>Check By:</div></div>
+    <p style="margin-top:18px;font-style:italic">Document No. RCM-OMF-ACC. 005 Revision No.01 Effectivity Date: Aug 15, 2005</p>`;
+}
+
+function resetForm() {
+  editingId = null;
+  $('date').value = todayISO(); $('day').value = dayOf($('date').value);
+  ['from','to','purpose','amount'].forEach(i => $(i).value = '');
+  $('expense').value = ''; $('service').value = '';
+  $('saveBtn').textContent = 'Save entry'; $('cancelBtn').style.display = 'none';
+}
+
+$('date').addEventListener('input', () => $('day').value = dayOf($('date').value));
+
+$('saveBtn').onclick = async () => {
+  if (!$('date').value) return setStatus('Pick a date first.', true);
+  const entry = {
+    date: $('date').value, day: dayOf($('date').value),
+    from: $('from').value.trim(), to: $('to').value.trim(), purpose: $('purpose').value.trim(),
+    expense: $('expense').value, amount: $('amount').value, service: $('service').value
+  };
+  $('saveBtn').disabled = true; setStatus('Saving…');
+  try {
+    await call(editingId ? {action: 'update', id: editingId, entry} : {action: 'add', entry});
+    resetForm(); await load(); setStatus('Saved.');
+  } catch (e) { setStatus('Save failed: ' + e.message, true); }
+  $('saveBtn').disabled = false;
+};
+
+$('cancelBtn').onclick = resetForm;
+
+$('rows').onclick = async ev => {
+  const ed = ev.target.dataset.edit, del = ev.target.dataset.del;
+  if (ed) {
+    const e = entries.find(x => x.id === ed); if (!e) return;
+    editingId = ed;
+    $('date').value = e.date; $('day').value = e.day;
+    $('from').value = e.from; $('to').value = e.to; $('purpose').value = e.purpose;
+    $('expense').value = e.expense; $('amount').value = e.amount; $('service').value = e.service;
+    $('saveBtn').textContent = 'Update entry'; $('cancelBtn').style.display = '';
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+  if (del && confirm('Delete this entry?')) {
+    setStatus('Deleting…');
+    try { await call({action: 'delete', id: del}); await load(); setStatus('Deleted.'); }
+    catch (e) { setStatus('Delete failed: ' + e.message, true); }
+  }
+};
+
+$('month').addEventListener('input', () => { filterMonth = $('month').value; render(); });
+$('allBtn').onclick = () => { filterMonth = ''; $('month').value = ''; render(); };
+$('refreshBtn').onclick = load;
+$('printBtn').onclick = () => window.print();
+
+$('month').value = todayISO().slice(0, 7); filterMonth = $('month').value;
+resetForm(); load();
+</script>
+</body>
+</html>
