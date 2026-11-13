@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Errands Travel Log</title>
 <style>
-  :root{--bg:#f4f5f7;--card:#fff;--ink:#1c2230;--mut:#6b7385;--line:#d9dde5;--acc:#0b4a8f;--acc2:#e8f0fa;--bad:#b3261e}
+  :root{--bg:#f4f5f7;--card:#fff;--ink:#1c2230;--mut:#6b7385;--line:#d9dde5;--acc:#0b4a8f;--acc2:#e8f0fa;--bad:#b3261e;--ok:#1e8e5a}
   *{box-sizing:border-box}
   body{margin:0;font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
   .wrap{max-width:980px;margin:0 auto;padding:16px}
@@ -13,6 +13,7 @@
   header h1{margin:0;font-size:22px;font-weight:600}
   header p{margin:2px 0;color:var(--mut);font-size:13px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}
+  .card h2{margin:0 0 10px;font-size:16px}
   .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
   .grid label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:4px}
   .c2{grid-column:span 2}.c3{grid-column:span 3}.c6{grid-column:span 6}
@@ -36,9 +37,11 @@
   .handle{cursor:grab;touch-action:none;user-select:none;text-align:center;color:var(--mut);font-size:18px;width:34px;padding:7px 2px}
   tr.dragging{opacity:.55;background:var(--acc2);box-shadow:0 2px 8px rgba(0,0,0,.2)}
   body.dragmode{user-select:none;cursor:grabbing}
+  .lock{display:inline-block;background:#e3f6ec;color:var(--ok);font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px}
   .sigs{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px;font-size:13px;font-style:italic}
   .sigs div{border-top:1px solid #000;padding-top:3px}
   #printArea{display:none}
+  #gate{text-align:center;padding:40px 16px}
   @media (max-width:640px){.grid{grid-template-columns:repeat(2,1fr)}.c2,.c3,.c6{grid-column:span 2}}
   @media print{
     body{background:#fff}.wrap>*:not(#printArea){display:none!important}
@@ -56,79 +59,73 @@
     <h1>Rotary Club of Makati</h1>
     <p>District 3830</p>
     <p>ITINERARY FORM (errands) &middot; Travel Log</p>
+    <p class="status" id="who"></p>
   </header>
 
-  <div class="card">
-    <div class="grid">
-      <label class="c2">Date
-        <input type="date" id="date">
-      </label>
-      <label class="c2">Day
-        <input type="text" id="day" readonly>
-      </label>
-      <label class="c2">Re-imbursement for
-        <select id="service">
-          <option value="">(none)</option>
-          <option>Club Service</option>
-          <option>Community Service</option>
-          <option>International Service</option>
-          <option>Vocational Service</option>
-          <option>Administrative</option>
-          <option>Accounting</option>
-          <option>Others</option>
-        </select>
-      </label>
-      <label class="c3">From
-        <input type="text" id="from" placeholder="Starting point">
-      </label>
-      <label class="c3">To
-        <input type="text" id="to" placeholder="Destination">
-      </label>
-      <label class="c3">Purpose
-        <input type="text" id="purpose" placeholder="Reason for errand">
-      </label>
-      <label class="c2">Expense type
-        <select id="expense">
-          <option value="">(blank)</option>
-          <option>Gas</option>
-          <option>Parking</option>
-        </select>
-      </label>
-      <label>Amount
-        <input type="number" id="amount" inputmode="decimal" min="0" step="0.01" placeholder="0.00">
-      </label>
-    </div>
-    <div class="row" style="margin-top:14px">
-      <button class="pri" id="saveBtn">Save entry</button>
-      <button id="cancelBtn" style="display:none">Cancel edit</button>
-      <span class="status" id="status"></span>
-    </div>
-  </div>
+  <div id="gate" class="card status">Signing in…</div>
 
-  <div class="card">
-    <div class="toolbar">
-      <div class="row">
-        <label class="status">From date
-          <input type="date" id="fromDate">
+  <div id="appBody" style="display:none">
+    <div class="card">
+      <h2>New errand</h2>
+      <div class="grid">
+        <label class="c2">Date <input type="date" id="date"></label>
+        <label class="c2">Day <input type="text" id="day" readonly></label>
+        <label class="c2">Re-imbursement for
+          <select id="service">
+            <option value="">(none)</option>
+            <option>Club Service</option><option>Community Service</option><option>International Service</option>
+            <option>Vocational Service</option><option>Administrative</option><option>Accounting</option><option>Others</option>
+          </select>
         </label>
-        <label class="status">To date
-          <input type="date" id="toDate">
+        <label class="c3">From <input type="text" id="from" placeholder="Starting point"></label>
+        <label class="c3">To <input type="text" id="to" placeholder="Destination"></label>
+        <label class="c3">Purpose <input type="text" id="purpose" placeholder="Reason for errand"></label>
+        <label class="c2">Expense type
+          <select id="expense"><option value="">(blank)</option><option>Gas</option><option>Parking</option></select>
         </label>
-        <button id="allBtn">Show all</button>
-        <button id="refreshBtn">Refresh</button>
+        <label>Amount <input type="number" id="amount" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></label>
       </div>
-      <div class="row">
-        <button id="sortBtn" title="Arrange all entries by date, oldest first">Sort by date</button>
-        <button id="printBtn">Print form</button>
+      <div class="row" style="margin-top:14px">
+        <button class="pri" id="saveBtn">Save entry</button>
+        <button id="cancelBtn" style="display:none">Cancel edit</button>
+        <span class="status" id="status"></span>
       </div>
     </div>
-    <p class="status" style="margin:0 0 8px">Drag the &#8942;&#8942; handle on the left of a row to move an entry to the right position.</p>
-    <div class="tablewrap">
-      <table>
-        <thead><tr><th></th><th>Date</th><th>Day</th><th>From</th><th>To</th><th>Purpose</th><th>Expense</th><th class="num">Amount</th><th></th></tr></thead>
-        <tbody id="rows"></tbody>
-        <tfoot><tr><td colspan="7">Total</td><td class="num" id="total">0.00</td><td></td></tr></tfoot>
-      </table>
+
+    <div class="card">
+      <h2>Current reimbursement form <span class="status">(not yet printed)</span></h2>
+      <div id="openBanner"></div>
+      <div class="toolbar">
+        <div class="row">
+          <label class="status">From date <input type="date" id="fromDate"></label>
+          <label class="status">To date <input type="date" id="toDate"></label>
+          <button id="allBtn">Show all</button>
+          <button id="refreshBtn">Refresh</button>
+        </div>
+        <div class="row">
+          <button id="sortBtn" title="Arrange entries by date, oldest first">Sort by date</button>
+          <button class="pri" id="printBtn">Save &amp; print form</button>
+        </div>
+      </div>
+      <p class="status" style="margin:0 0 8px">Entries saved here are yours only. Printing saves them as one reimbursement report that you can reprint anytime, and the next errands start a new form. Drag the &#8942;&#8942; handle to reorder.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th></th><th>Date</th><th>Day</th><th>From</th><th>To</th><th>Purpose</th><th>Expense</th><th class="num">Amount</th><th></th></tr></thead>
+          <tbody id="rows"></tbody>
+          <tfoot><tr><td colspan="7">Total</td><td class="num" id="total">0.00</td><td></td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Printed reports <span class="status">(saved &middot; you can view and reprint)</span></h2>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Report no.</th><th>Printed on</th><th>For</th><th class="num">Entries</th><th class="num">Total</th><th></th></tr></thead>
+          <tbody id="reports"></tbody>
+        </table>
+      </div>
+      <div id="reportView" style="margin-top:14px"></div>
     </div>
   </div>
 
@@ -139,36 +136,63 @@
 const API = 'https://script.google.com/macros/s/AKfycbz4uN17nzy0nNEYOXkQ_APVqrZyY9lqnzJPR7tGN01JGyo9-J__t07rk36W8gxT0Ey4/exec';
 const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const $ = id => document.getElementById(id);
-let entries = [], editingId = null, rangeFrom = '', rangeTo = '';
+let entries = [], reports = [], editingId = null, rangeFrom = '', rangeTo = '', token = '';
 
 const peso = n => Number(n || 0).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const dayOf = iso => { if (!iso) return ''; const [y,m,d] = iso.split('-').map(Number); return DAYS[new Date(y, m-1, d).getDay()]; };
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const fmtDT = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('en-PH', {dateStyle:'medium', timeStyle:'short'}); };
+const sum = l => l.reduce((s, e) => s + (Number(e.amount) || 0), 0);
 
 function setStatus(msg, err) { const s = $('status'); s.textContent = msg; s.className = 'status' + (err ? ' err' : ''); }
 
+/* ---------- sign-in: token comes from the RCM Admin portal ---------- */
+function askToken() { try { window.parent.postMessage({type: 'rcm-need-token'}, '*'); } catch (_) {} }
+window.addEventListener('message', ev => {
+  if (ev.source !== window.parent || !ev.data || ev.data.type !== 'rcm-token') return;
+  const first = !token;
+  token = ev.data.token;
+  const u = ev.data.user || {};
+  $('who').textContent = u.email ? 'Signed in as ' + u.email : '';
+  if (first) { $('gate').style.display = 'none'; $('appBody').style.display = ''; resetForm(); load(); }
+});
+if (window.parent === window) {
+  $('gate').textContent = 'Please open the Errands Travel Log from the RCM Admin portal and sign in with your Google account.';
+} else {
+  let tries = 0;
+  const t = setInterval(() => {
+    if (token) return clearInterval(t);
+    if (++tries > 20) { clearInterval(t); $('gate').textContent = 'Could not sign in. Reload the portal and try again.'; return; }
+    askToken();
+  }, 500);
+  askToken();
+}
+
 async function call(payload) {
-  const res = await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(payload) });
+  const res = await fetch(API, { method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({token, ...payload}) });
   const j = await res.json();
-  if (!j.ok) throw new Error(j.error || 'Request failed');
+  if (!j.ok) {
+    if (j.error === 'auth') { askToken(); throw new Error('Sign-in expired. Please try again in a moment.'); }
+    if (j.error === 'not_authorized') throw new Error('Your account is not allowed to use Errands Travel Log. Ask an admin.');
+    throw new Error(j.error || 'Request failed');
+  }
   return j;
 }
 
 async function load() {
   setStatus('Loading…');
   try {
-    const res = await fetch(API);
-    const j = await res.json();
-    if (!j.ok) throw new Error(j.error);
-    entries = j.entries; // server already returns them in saved (dragged) order
-    setStatus('');
-    render();
+    const j = await call({action: 'list'});
+    entries = j.entries; reports = j.reports || [];
+    setStatus(''); render();
   } catch (e) { setStatus('Could not load: ' + e.message, true); }
 }
 
+const openRep = () => reports.find(r => r.open);
+const drafts = () => { const o = openRep(); return entries.filter(e => !e.reportid || (o && e.reportid === o.id)); };
 function visible() {
-  return entries.filter(e => {
+  return drafts().filter(e => {
     const d = String(e.date);
     return (!rangeFrom || d >= rangeFrom) && (!rangeTo || d <= rangeTo);
   });
@@ -183,24 +207,80 @@ function render() {
       <td>${esc(e.purpose)}${e.service ? `<div class="status">${esc(e.service)}</div>` : ''}</td>
       <td>${esc(e.expense)}</td><td class="num">${e.amount === '' ? '' : peso(e.amount)}</td>
       <td class="row" style="flex-wrap:nowrap"><button data-edit="${esc(e.id)}">Edit</button><button class="del" data-del="${esc(e.id)}">Delete</button></td>
-    </tr>`).join('') : '<tr><td colspan="9" class="status">No entries yet.</td></tr>';
-  $('total').textContent = peso(list.reduce((s, e) => s + (Number(e.amount) || 0), 0));
-  buildPrint(list);
+    </tr>`).join('') : '<tr><td colspan="9" class="status">No unprinted entries. Add a new errand above.</td></tr>';
+  $('total').textContent = peso(sum(list));
+  $('printBtn').disabled = !list.length;
+  const o = openRep();
+  $('openBanner').innerHTML = o ? `<p style="margin:0 0 10px;padding:8px 10px;background:#fff3da;border-radius:7px;font-size:13px">Editing report <b>${esc(o.id)}</b>. Add or change errands, then press <b>Save &amp; print form</b> to update and reprint it.</p>` : '';
+  $('printBtn').textContent = o ? 'Save & print (update report)' : 'Save & print form';
+
+  $('reports').innerHTML = reports.length ? reports.map(r => `
+    <tr><td>${esc(r.id)} ${r.open ? '<span class="lock" style="background:#fff3da;color:#9a6200">REOPENED</span>' : '<span class="lock">SAVED</span>'}</td><td>${esc(fmtDT(r.printed))}</td><td>${esc(r.services || '—')}</td>
+    <td class="num">${r.count}</td><td class="num">${peso(r.total)}</td>
+    <td class="row" style="flex-wrap:nowrap"><button data-view="${esc(r.id)}">View</button><button data-print="${esc(r.id)}">Print again</button><button data-reopen="${esc(r.id)}" ${openRep() ? 'disabled' : ''}>Reopen</button></td></tr>`).join('')
+    : '<tr><td colspan="6" class="status">No printed reports yet.</td></tr>';
 }
 
-function buildPrint(list) {
+function formHTML(list, repId, printedIso) {
   const blanks = Math.max(0, 22 - list.length);
   const services = [...new Set(list.map(e => e.service).filter(Boolean))];
-  $('printArea').innerHTML = `
+  return `
     <h1>Rotary Club of Makati</h1><p>District 3830</p><p>ITINERARY FORM (errands)</p>
     <p>May I request for the re-imbursement of the listed transportation expenses for ${services.length ? esc(services.join(', ')) : '____________'}</p>
+    <p>Report no. ${esc(repId)} &middot; Printed ${esc(fmtDT(printedIso))}</p>
     <table><thead><tr><th>Date</th><th>Day</th><th>From</th><th>To</th><th>Purpose</th><th></th><th class="num">Amount</th></tr></thead><tbody>
     ${list.map(e => `<tr><td>${esc(e.date)}</td><td>${esc(e.day)}</td><td>${esc(e.from)}</td><td>${esc(e.to)}</td><td>${esc(e.purpose)}</td><td>${esc(e.expense)}</td><td class="num">${e.amount === '' ? '' : peso(e.amount)}</td></tr>`).join('')}
     ${'<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>'.repeat(blanks)}
-    </tbody><tfoot><tr><td colspan="6"><b>Total</b></td><td class="num"><b>${peso(list.reduce((s, e) => s + (Number(e.amount) || 0), 0))}</b></td></tr></tfoot></table>
+    </tbody><tfoot><tr><td colspan="6"><b>Total</b></td><td class="num"><b>${peso(sum(list))}</b></td></tr></tfoot></table>
     <div class="sigs"><div>Requested By:</div><div>Received By:</div><div>Approved By:</div><div>Check By:</div></div>
     <p style="margin-top:18px;font-style:italic">Document No. RCM-OMF-ACC. 005 Revision No.01 Effectivity Date: Aug 15, 2005</p>`;
 }
+
+/* ---------- Save & print: locks the entries, then prints once ---------- */
+$('printBtn').onclick = async () => {
+  const o = openRep();
+  const list = o ? drafts() : visible();
+  if (!list.length) return;
+  if (o ? !confirm(`Update report ${o.id} with ${list.length} entr${list.length === 1 ? 'y' : 'ies'} (total ${peso(sum(list))}) and print it again?`) : !confirm(`Save and print ${list.length} entr${list.length === 1 ? 'y' : 'ies'} (total ${peso(sum(list))})?\n\nThe form will be saved under Printed reports (you can reprint it later). New errands will go on a new form.`)) return;
+  $('printBtn').disabled = true; setStatus('Saving report…');
+  try {
+    const j = await call({action: 'submit', ids: list.map(e => e.id), reportId: o ? o.id : undefined});
+    $('printArea').innerHTML = formHTML(list, j.report.id, j.report.printed);
+    setStatus('Saved as ' + j.report.id + '. Printing…');
+    await load();
+    setTimeout(() => window.print(), 150);
+  } catch (e) { setStatus('Could not save report: ' + e.message, true); render(); }
+};
+window.addEventListener('afterprint', () => { $('printArea').innerHTML = ''; setStatus(''); });
+
+/* ---------- view a printed report (screen only, no print) ---------- */
+function reprint(r) {
+  const list = entries.filter(e => e.reportid === r.id);
+  $('printArea').innerHTML = formHTML(list, r.id, r.printed);
+  setTimeout(() => window.print(), 100);
+}
+$('reports').onclick = ev => {
+  const rb = ev.target.closest('button[data-reopen]');
+  if (rb) {
+    if (!confirm('Reopen this report to add or edit errands? When you print it again it keeps the same report number and replaces the earlier printout.')) return;
+    setStatus('Reopening…');
+    call({action: 'reopen', reportId: rb.dataset.reopen}).then(() => load()).then(() => { setStatus('Report reopened. Add your errands above, then Save & print.'); window.scrollTo({top: 0, behavior: 'smooth'}); }).catch(e => setStatus('Could not reopen: ' + e.message, true));
+    return;
+  }
+  const pb = ev.target.closest('button[data-print]');
+  if (pb) { const r = reports.find(x => x.id === pb.dataset.print); if (r) reprint(r); return; }
+  const b = ev.target.closest('button[data-view]'); if (!b) return;
+  const r = reports.find(x => x.id === b.dataset.view); if (!r) return;
+  const list = entries.filter(e => e.reportid === r.id);
+  $('reportView').innerHTML = `
+    <div class="row" style="justify-content:space-between"><b>${esc(r.id)}</b><span><span class="lock">SAVED</span> <button class="pri" id="printAgain">Print again</button> <button id="closeView">Close</button></span></div>
+    <div class="tablewrap"><table style="margin-top:8px"><thead><tr><th>Date</th><th>Day</th><th>From</th><th>To</th><th>Purpose</th><th>Expense</th><th class="num">Amount</th></tr></thead><tbody>
+    ${list.map(e => `<tr><td>${esc(e.date)}</td><td>${esc(e.day)}</td><td>${esc(e.from)}</td><td>${esc(e.to)}</td><td>${esc(e.purpose)}</td><td>${esc(e.expense)}</td><td class="num">${e.amount === '' ? '' : peso(e.amount)}</td></tr>`).join('')}
+    </tbody><tfoot><tr><td colspan="6">Total</td><td class="num">${peso(sum(list))}</td></tr></tfoot></table></div>`;
+  $('printAgain').onclick = () => reprint(r);
+  $('closeView').onclick = () => $('reportView').innerHTML = '';
+  $('reportView').scrollIntoView({behavior: 'smooth'});
+};
 
 function resetForm() {
   editingId = null;
@@ -250,29 +330,27 @@ $('rows').onclick = async ev => {
   }
 };
 
-/* ---------- date range filter (no more month filter) ---------- */
 $('fromDate').addEventListener('input', () => { rangeFrom = $('fromDate').value; render(); });
 $('toDate').addEventListener('input', () => { rangeTo = $('toDate').value; render(); });
 $('allBtn').onclick = () => { rangeFrom = rangeTo = ''; $('fromDate').value = $('toDate').value = ''; render(); };
 $('refreshBtn').onclick = load;
-$('printBtn').onclick = () => window.print();
 
-/* ---------- drag to reorder (mouse + touch) ---------- */
+/* ---------- drag to reorder (unprinted entries only) ---------- */
 async function saveOrder() {
   setStatus('Saving order…');
-  try { await call({action: 'reorder', ids: entries.map(e => e.id)}); setStatus('Order saved.'); }
+  try { await call({action: 'reorder', ids: drafts().map(e => e.id)}); setStatus('Order saved.'); }
   catch (e) { setStatus('Order not saved: ' + e.message, true); load(); }
 }
 
 $('sortBtn').onclick = async () => {
-  entries.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  const sorted = drafts().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  entries = [...sorted, ...entries.filter(e => e.reportid)];
   render(); await saveOrder();
 };
 
 (function () {
   const tbody = $('rows');
   let dragRow = null;
-
   tbody.addEventListener('pointerdown', ev => {
     const h = ev.target.closest('.handle'); if (!h) return;
     dragRow = h.closest('tr');
@@ -281,7 +359,6 @@ $('sortBtn').onclick = async () => {
     h.setPointerCapture(ev.pointerId);
     ev.preventDefault();
   });
-
   tbody.addEventListener('pointermove', ev => {
     if (!dragRow) return;
     const rows = [...tbody.querySelectorAll('tr[data-id]')].filter(r => r !== dragRow);
@@ -293,11 +370,9 @@ $('sortBtn').onclick = async () => {
         break;
       }
     }
-    // auto-scroll near screen edges
     if (ev.clientY < 60) window.scrollBy(0, -12);
     else if (ev.clientY > window.innerHeight - 60) window.scrollBy(0, 12);
   });
-
   const end = () => {
     if (!dragRow) return;
     dragRow.classList.remove('dragging');
@@ -306,15 +381,12 @@ $('sortBtn').onclick = async () => {
     const ids = [...tbody.querySelectorAll('tr[data-id]')].map(r => r.dataset.id);
     const byId = Object.fromEntries(entries.map(e => [String(e.id), e]));
     const set = new Set(ids); let k = 0;
-    // put the dragged (visible) rows back into their slots in the full list
     entries = entries.map(e => set.has(String(e.id)) ? byId[ids[k++]] : e);
     render(); saveOrder();
   };
   tbody.addEventListener('pointerup', end);
   tbody.addEventListener('pointercancel', end);
 })();
-
-resetForm(); load();
 </script>
 </body>
 </html>
